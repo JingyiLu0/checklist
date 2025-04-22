@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Checklist</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    h2 {
+      margin-top: 30px;
+      display: inline-block;
+      margin-right: 10px;
+    }
+    .list {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 15px;
+      background: #fff;
+      margin-bottom: 20px;
+    }
+    .item.done span {
+      text-decoration: line-through;
+      color: gray;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    button {
+      margin-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Checklist</h1>
+  <input type="text" id="listName" placeholder="New list name">
+  <button onclick="addList()">Add List</button>
+
+  <div id="lists"></div>
+
+  <script>
+    let data = loadData();
+
+    function saveData() {
+      localStorage.setItem('checklistData', JSON.stringify(data));
+    }
+
+    function loadData() {
+      try {
+        return JSON.parse(localStorage.getItem('checklistData')) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    function render() {
+      const container = document.getElementById('lists');
+      container.innerHTML = '';
+      data.forEach((list, index) => {
+        const listDiv = document.createElement('div');
+        listDiv.className = 'list';
+        listDiv.innerHTML = `
+          <h2>${list.name}</h2>
+          <button onclick="deleteList(${index})">Delete List</button><br><br>
+          <input type="text" placeholder="New item">
+          <button onclick="addItem(this, ${index})">Add Item</button>
+          <button onclick="clearChecked(${index})">Clear Checked</button>
+          <ul></ul>
+        `;
+        const ul = listDiv.querySelector('ul');
+        const unchecked = list.items.filter(i => !i.done);
+        const checked = list.items.filter(i => i.done);
+        [...unchecked, ...checked].forEach(item => {
+          const li = document.createElement('li');
+          li.className = 'item' + (item.done ? ' done' : '');
+          li.innerHTML = `<label><input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleDone(this, ${index})"> <span>${item.text}</span></label>`;
+          ul.appendChild(li);
+        });
+        container.appendChild(listDiv);
+      });
+    }
+
+    function addList() {
+      const name = document.getElementById('listName').value.trim();
+      if (!name) return;
+      data.push({ name, items: [] });
+      saveData();
+      render();
+      document.getElementById('listName').value = '';
+    }
+
+    function deleteList(index) {
+      data.splice(index, 1);
+      saveData();
+      render();
+    }
+
+    function addItem(button, listIndex) {
+      const input = button.parentElement.querySelector('input[type="text"]');
+      const text = input.value.trim();
+      if (!text) return;
+      data[listIndex].items.unshift({ text, done: false });
+      saveData();
+      render();
+    }
+
+    function toggleDone(checkbox, listIndex) {
+      const text = checkbox.closest('label').querySelector('span').textContent;
+      const list = data[listIndex];
+      const idx = list.items.findIndex(i => i.text === text);
+      if (idx !== -1) {
+        list.items[idx].done = checkbox.checked;
+        const item = list.items.splice(idx, 1)[0];
+        if (item.done) {
+          list.items.push(item); 
+        } else {
+          list.items.unshift(item); 
+        }
+        saveData();
+        render();
+      }
+    }
+
+    function clearChecked(listIndex) {
+      data[listIndex].items = data[listIndex].items.filter(i => !i.done);
+      saveData();
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
