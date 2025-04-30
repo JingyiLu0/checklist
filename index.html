@@ -37,7 +37,7 @@
 </head>
 <body>
   <h1>Checklist</h1>
-  <input type="text" id="listName" placeholder="New list name">
+  <input type="text" id="listName" placeholder="New list name" onkeydown="if(event.key === 'Enter') addList()">
   <button onclick="addList()">Add List</button>
 
   <div id="lists"></div>
@@ -66,7 +66,7 @@
         listDiv.innerHTML = `
           <h2>${list.name}</h2>
           <button onclick="deleteList(${index})">Delete List</button><br><br>
-          <input type="text" placeholder="New item">
+          <input type="text" placeholder="New item" onkeydown="if(event.key === 'Enter') addItem(this.nextElementSibling, ${index})">
           <button onclick="addItem(this, ${index})">Add Item</button>
           <button onclick="clearChecked(${index})">Clear Checked</button>
           <ul></ul>
@@ -106,6 +106,13 @@
       data[listIndex].items.unshift({ text, done: false });
       saveData();
       render();
+
+      const listDivs = document.querySelectorAll('.list');
+      const thisListDiv = listDivs[listIndex];
+      const newInput = thisListDiv.querySelector('input[type="text"]');
+      if (newInput) {
+        newInput.focus();
+      }
     }
 
     function toggleDone(checkbox, listIndex) {
